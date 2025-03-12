@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LBook - Smart Clipboard Manager</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #121212;
+            color: white;
+            margin: 0;
+            padding: 20px;
+            text-align: center;
+        }
+        .container {
+            max-width: 600px;
+            margin: auto;
+            background: #1e1e1e;
+            padding: 20px;
+            border-radius: 10px;
+        }
+        .recognized-items {
+            margin-top: 20px;
+            text-align: left;
+        }
+        .bold-text {
+            font-weight: bold;
+            margin-top: 10px;
+        }
+        .item {
+            background: #333;
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: background 0.3s ease;
+        }
+        .copy-btn {
+            background: #4CAF50;
+            border: none;
+            color: white;
+            padding: 5px 10px;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: background 0.3s ease;
+        }
+        .copied {
+            background: #2E7D32 !important;
+        }
+    </style>
+</head>
+<body onpaste="handlePaste(event)">
+    <div class="container">
+        <h1>LBook</h1>
+        <div class="recognized-items" id="recognizedItems"></div>
+    </div>
+    <script>
+        function handlePaste(event) {
+            event.preventDefault();
+            const text = (event.clipboardData || window.clipboardData).getData('text').trim();
+            if (text) {
+                processText(text);
+            }
+        }
+        
+        function processText(text) {
+            const recognizedContainer = document.getElementById('recognizedItems');
+            recognizedContainer.innerHTML = '';
+            
+            const lines = text.split('\n');
+            let paragraph = '';
+            
+            lines.forEach(line => {
+                line = line.trim();
+                if (line.startsWith('http') || line.startsWith('cd') || line.startsWith('ls') || line.includes('sudo') || line.includes('mkdir') || line.includes('/')) {
+                    if (paragraph) {
+                        const boldText = document.createElement('p');
+                        boldText.className = 'bold-text';
+                        boldText.textContent = paragraph;
+                        recognizedContainer.appendChild(boldText);
+                        paragraph = '';
+                    }
+                    addRecognizedItem(line, recognizedContainer);
+                } else {
+                    paragraph += (paragraph ? ' ' : '') + line;
+                }
+            });
+            
+            if (paragraph) {
+                const boldText = document.createElement('p');
+                boldText.className = 'bold-text';
+                boldText.textContent = paragraph;
+                recognizedContainer.appendChild(boldText);
+            }
+        }
+        
+        function addRecognizedItem(text, container) {
+            const itemDiv = document.createElement('div');
+            itemDiv.className = 'item';
+            
+            const textSpan = document.createElement('span');
+            textSpan.textContent = text;
+            textSpan.style.flex = '1';
+            
+            const copyBtn = document.createElement('button');
+            copyBtn.className = 'copy-btn';
+            copyBtn.textContent = 'Copy';
+            copyBtn.onclick = () => copyToClipboard(text, itemDiv, copyBtn);
+            
+            itemDiv.appendChild(textSpan);
+            itemDiv.appendChild(copyBtn);
+            container.appendChild(itemDiv);
+        }
+        
+        function copyToClipboard(text, itemDiv, copyBtn) {
+            navigator.clipboard.writeText(text).then(() => {
+                itemDiv.classList.add('copied');
+                copyBtn.classList.add('copied');
+                setTimeout(() => {
+                    itemDiv.classList.remove('copied');
+                    copyBtn.classList.remove('copied');
+                }, 1000);
+            });
+        }
+    </script>
+</body>
+</html>
